@@ -140,6 +140,7 @@ legend('topleft', legend = c('Raw data', 'Post processing'),
 The below table shows the differences between sample sizes per species. This table should also be checked manually for misspelled names.
 
 ```{r}
+names(keepTrack$perSpp) <- c('species', 'raw data', 'post processing')
 kable(keepTrack$perSpp, row.names = FALSE)
 ```
 
