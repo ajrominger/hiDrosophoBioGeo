@@ -23,6 +23,18 @@ The raw data started with `r keepTrack$nrowInitial` rows. As a result of de-dupl
 keepTrack$keyCol
 ```
 
+It should be noted that de-duplication happened after cleaning all species and geographic names as detailed below.
+
+
+## Cleaning species names
+
+The following species names were corrected (i.e. changed from `old_name` to `new_name`):
+
+```{r}
+kable(keepTrack$nameFix, row.names = FALSE)
+```
+
+
 ## Cleaning geographical data
 
 Some island names were inconsistent.  The original island names were
@@ -44,6 +56,7 @@ nIslandOut <- nrow(keepTrack$outsideIsland)
 islandsGood <- nIslandOut == 0
 rec <- ifelse(nIslandOut == 1, 'record', 'records')
 ```
+
 
 Furthermore, we checked that all records fall within the bounds of the islands they were reported from (e.g. a record from Hawai\`i Island does indeed fall within the boundary of Hawai\`i Island).  We found `r nIslandOut` `r rec` falling outside the island polygons.
 
@@ -92,6 +105,43 @@ codeCode <- function(x) {
 }
 ```
 
-The final dataset contains `r nRecFinal` records and is saved as an R object of class `r codeCode(keepTrack$class)` from the *sp* package [@sp] and has geographic coordinate reference system `r codeCode(keepTrack$proj)`.
+The final dataset is saved as an R object of class `r codeCode(keepTrack$class)` from the *sp* package [@sp] and has geographic coordinate reference system `r codeCode(keepTrack$proj)`.
+
+The final dataset contains `r nRecFinal` records.  Below we summarize changes between the raw data and filtered data.
+
+### Geographic localities
+
+The following localities were lost after filtering:
+
+```{r}
+kable(keepTrack$geoLost, row.names = FALSE)
+```
+
+
+### Samples per year
+
+The below plot shows the differences between sample sizes per year
+
+```{r fig.align='center', fig.width=6, fig.height=4}
+par(mar = c(3, 3, 0, 0) + 0.5, mgp = c(2, 0.75, 0), tcl = -0.05)
+plot(keepTrack$perYr[, c('year', 'nrec_initial')], 
+     type = 'l', lwd = 2, 
+     xlab = 'Year', ylab = 'Number of records')
+points(keepTrack$perYr[, c('year', 'nrec_final')], 
+       type = 'l', lwd = 2, col = 'red')
+
+legend('topleft', legend = c('Raw data', 'Post processing'), 
+       lty = 1, col = c('black', 'red'), lwd = 2, bty = 'n')
+```
+
+
+### Samples per species
+
+The below table shows the differences between sample sizes per species. This table should also be checked manually for misspelled names.
+
+```{r}
+kable(keepTrack$perSpp, row.names = FALSE)
+```
+
 
 ## References
