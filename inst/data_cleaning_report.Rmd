@@ -1,0 +1,97 @@
+---
+title: "Hawaii Drosophila Data Cleaning"
+output: pdf_document
+bibliography: ../manuscript/hiDrosophoBioGeo.bib
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = FALSE, include = TRUE)
+load('keepTrack.RData')
+```
+
+## Data version
+
+The raw data were received `r format(keepTrack$dataDate, '%d %B %Y')`.
+
+
+## De-duplication
+
+The raw data started with `r keepTrack$nrowInitial` rows. As a result of de-duplication a total of `r keepTrack$nrowInitial - keepTrack$nrowDeDup` rows were removed.  We used the following columns as criteria to check for duplicates (i.e. if a record had equal values for all these columns it was deemed a duplicate):
+
+```{r}
+keepTrack$keyCol
+```
+
+## Cleaning geographical data
+
+Some island names were inconsistent.  The original island names were
+
+```{r}
+keepTrack$islandNameOld
+```
+
+The updated names are
+
+```{r}
+keepTrack$islandNameNew
+```
+
+Some records had low spatial accuracy.  Removing those records further eliminated `r keepTrack$nrowDeDup - keepTrack$nrowBadACC` rows.
+
+```{r}
+nIslandOut <- nrow(keepTrack$outsideIsland)
+islandsGood <- nIslandOut == 0
+rec <- ifelse(nIslandOut == 1, 'record', 'records')
+```
+
+Furthermore, we checked that all records fall within the bounds of the islands they were reported from (e.g. a record from Hawai\`i Island does indeed fall within the boundary of Hawai\`i Island).  We found `r nIslandOut` `r rec` falling outside the island polygons.
+
+```{r eval = !islandsGood, results = 'asis'}
+cat('These are the records falling outside the island polygons:')
+```
+
+```{r eval = !islandsGood}
+kable(keepTrack$outsideIsland, row.names = FALSE)
+```
+
+```{r eval = !islandsGood, results = 'asis'}
+cat('These records falling outside the island polygons will be removed unless they can be corrected.')
+```
+
+
+## Cleaning up collection dates
+
+```{r}
+nNoDate <- nrow(keepTrack$noDate)
+anyNoDate <- nNoDate > 0
+rec <- ifelse(nNoDate == 1, 'date', 'dates')
+```
+
+Dates were in multiple formats which have been standardized to `YYYY-MM-DD` format.  We checked for missing dates and found `r nNoDate` missing `r rec`.
+
+```{r eval = anyNoDate, results = 'asis'}
+cat('Records with missing dates are:')
+```
+
+```{r eval = anyNoDate}
+kable(keepTrack$noDate, row.names = FALSE)
+```
+
+```{r eval = anyNoDate, results = 'asis'}
+cat('These records with no collection date will be removed unless they can be corrected.')
+```
+
+## Final dataset
+
+```{r}
+nRecFinal <- with(keepTrack, nrowBadACC - nrow(noDate) - nrow(outsideIsland))
+
+codeCode <- function(x) {
+    sprintf('`%s`', x)
+}
+```
+
+The final dataset contains `r nRecFinal` records and is saved as an R object of class `r codeCode(keepTrack$class)` from the *sp* package [@sp] and has geographic coordinate reference system `r codeCode(keepTrack$proj)`.
+
+## References
