@@ -21,7 +21,11 @@ reportCols <- c('REFERENCE', 'SPECIES', 'ISLAND', 'POINT_Y', 'POINT_X',
 
 # ----
 # read data
-drosoph <- read.csv('inst/raw_data_2021-06-30.csv', as.is = TRUE)
+dataDate <- as.Date('2021-07-02')
+keepTrack$dataDate <- dataDate
+
+drosoph <- read.csv(sprintf('inst/raw_data_%s.csv', as.character(dataDate)),
+                    as.is = TRUE)
 
 # record keeping
 keepTrack$nrowInitial <- nrow(drosoph)
@@ -87,10 +91,6 @@ keepTrack$nameFix <- nameFix
 
 # ----
 # clean up dates
-
-# to check if parsed dates are in the future
-dataDate <- as.Date('2021-06-30')
-keepTrack$dataDate <- dataDate
 
 # place-holders
 stubDate <- as.Date('1000-01-01')
