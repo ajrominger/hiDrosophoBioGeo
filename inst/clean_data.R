@@ -25,6 +25,10 @@ drosoph <- read.csv('inst/raw_data_2021-06-30.csv', as.is = TRUE)
 
 # record keeping
 keepTrack$nrowInitial <- nrow(drosoph)
+nRecPerSpp <- aggregate(list(nrec = rep(1, nrow(drosoph))),
+                        list(species = drosoph$SPECIES),
+                        sum)
+keepTrack$nRecPerSppInitial <- nRecPerSpp
 
 
 # ----
@@ -37,12 +41,14 @@ drosoph$POINT_X <- as.numeric(drosoph$POINT_X)
 # fix wrong long
 drosoph$POINT_X <- -abs(drosoph$POINT_X)
 
-# clean island names (with record keeping)
+# clean island names
 keepTrack$islandNameOld <- unique(drosoph$ISLAND)
 
 drosoph$ISLAND[grep('Hawa|Big', drosoph$ISLAND)] <- 'Hawaii'
 
+# add info to record keeper
 keepTrack$islandNameNew <- unique(drosoph$ISLAND)
+keepTrack$geoInitial <- unique(drosoph[, c('ISLAND', 'LOCALITY')])
 
 
 # ----
@@ -51,6 +57,33 @@ colWeWant <- c('REFERENCE', 'SPECIES', 'ISLAND', 'POINT_Y', 'POINT_X',
                'RESERVE', 'TYPE', 'LOCALITY', 'ELEV_FT', 'ACC', 'DATE_',
                'YEAR', 'NUM', 'COLLECTOR', 'NOTES', 'GROUP', 'SUBGROUP')
 drosoph <- drosoph[, colWeWant]
+
+# ----
+# trim whitespace
+drosoph$REFERENCE <- trimws(drosoph$REFERENCE)
+drosoph$SPECIES <- trimws(drosoph$SPECIES)
+drosoph$ISLAND <- trimws(drosoph$ISLAND)
+drosoph$LOCALITY <- trimws(drosoph$LOCALITY)
+drosoph$GROUP <- trimws(drosoph$GROUP)
+drosoph$SUBGROUP <- trimws(drosoph$SUBGROUP)
+
+
+# ----
+# fix species names
+
+# map of incorrect names to correct names
+nameFix <- data.frame(old_name = c('silvestrs'),
+                      new_name = c('silvestris'))
+
+# replace incorrect names with correct
+newName <- nameFix$new_name[match(drosoph$SPECIES, nameFix$old_name)]
+newName[is.na(newName)] <- drosoph$SPECIES[is.na(newName)]
+
+drosoph$SPECIES <- newName
+
+# add to record keeping
+keepTrack$nameFix <- nameFix
+
 
 # ----
 # clean up dates
@@ -90,6 +123,13 @@ drosoph$YEAR <- year(drosoph$DATE)
 # remove entries with no date (with record keeping)
 keepTrack$noDate <- drosoph[drosoph$DATE == stubDate, reportCols]
 drosoph <- drosoph[drosoph$DATE != stubDate, ]
+
+# record initial collection frequency by year
+nRecPerYr <- aggregate(list(nrec = rep(1, nrow(drosoph))),
+                       list(year = drosoph$YEAR),
+                       sum)
+keepTrack$nRecPerYrInitial <- nRecPerYr
+
 
 # ----
 # de-duplicate
@@ -154,8 +194,38 @@ drosoph <- drosoph[islandCheck$ID[islandCheck$within], ]
 # save to /data
 save(drosoph, file = 'data/drosoph.RData')
 
+# data object record keeping
 keepTrack$proj <- proj4string(drosoph)
 keepTrack$class <- class(drosoph)
+
+# final records per spp
+nRecPerSpp <- aggregate(list(nrec = rep(1, nrow(drosoph))),
+                        list(species = drosoph$SPECIES),
+                        sum)
+keepTrack$nRecPerSppFinal <- nRecPerSpp
+
+names(keepTrack$nRecPerSppInitial)[2] <- 'nrec_initial'
+names(keepTrack$nRecPerSppFinal)[2] <- 'nrec_final'
+
+keepTrack$perSpp <- with(keepTrack, merge(nRecPerSppInitial, nRecPerSppFinal))
+
+# final records per year
+nRecPerYr <- aggregate(list(nrec = rep(1, nrow(drosoph))),
+                       list(year = drosoph$YEAR),
+                       sum)
+keepTrack$nRecPerYrFinal <- nRecPerYr
+
+names(keepTrack$nRecPerYrInitial)[2] <- 'nrec_initial'
+names(keepTrack$nRecPerYrFinal)[2] <- 'nrec_final'
+
+keepTrack$perYr <- with(keepTrack, merge(nRecPerYrInitial, nRecPerYrFinal))
+
+# final localities
+keepTrack$geoFinal <- unique(drosoph@data[, c('ISLAND', 'LOCALITY')])
+geoTemp <- rbind(keepTrack$geoInitial, keepTrack$geoFinal)
+geoTemp <- geoTemp[order(geoTemp$ISLAND), ]
+keepTrack$geoLost <- geoTemp[!(duplicated(geoTemp) |
+                                   duplicated(geoTemp, fromLast = TRUE)), ]
 
 # ----
 # write data processing report
@@ -163,3 +233,8 @@ keepTrack$class <- class(drosoph)
 # save record keeping object
 save(keepTrack, file = 'inst/keepTrack.RData')
 
+# render report
+rmarkdown::render('inst/data_cleaning_report.Rmd')
+
+# remove record keeping object (it was only needed for rendering the report)
+system('rm inst/keepTrack.RData')
