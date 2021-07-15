@@ -21,7 +21,7 @@ reportCols <- c('REFERENCE', 'SPECIES', 'ISLAND', 'POINT_Y', 'POINT_X',
 
 # ----
 # read data
-dataDate <- as.Date('2021-07-02')
+dataDate <- as.Date('2021-07-12')
 keepTrack$dataDate <- dataDate
 
 drosoph <- read.csv(sprintf('inst/raw_data_%s.csv', as.character(dataDate)),
@@ -87,6 +87,9 @@ drosoph$SPECIES <- newName
 
 # add to record keeping
 keepTrack$nameFix <- nameFix
+
+# replace 'nr. ' with 'nr_'
+drosoph$SPECIES <- gsub('nr. ', 'nr_', drosoph$SPECIES)
 
 
 # ----

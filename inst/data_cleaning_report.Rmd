@@ -49,7 +49,7 @@ The updated names are
 keepTrack$islandNameNew
 ```
 
-Some records had low spatial accuracy.  Removing those records further eliminated `r keepTrack$nrowDeDup - keepTrack$nrowBadACC` rows.
+Some records had low spatial accuracy (designated with a `C` in the `ACC` column.  Removing those records further eliminated `r keepTrack$nrowDeDup - keepTrack$nrowBadACC` rows.
 
 ```{r}
 nIslandOut <- nrow(keepTrack$outsideIsland)
