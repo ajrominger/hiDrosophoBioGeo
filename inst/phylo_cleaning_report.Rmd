@@ -1,0 +1,29 @@
+---
+title: "Phylogenetic cleaning"
+output: pdf_document
+bibliography: ../manuscript/hiDrosophoBioGeo.bib
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+
+opts_chunk$set(echo = FALSE)
+
+load('keepTrack.RData')
+```
+
+We are using the time-calibrated phylogeny from @magnacca2015, specifically the Newick file provided as Supplementary data 1.  Below are a few questions about matching the phylogeny to the spatial data
+
+## Definition of the picture wing clade
+
+What do we want to do with *Drosophila primaeva* and *D. adventitia*? According to @magnacca2015 these are both outside the picture wing clade.  However, we have spatial data for *D. primaeva* (the sister of the picture wings); we do not have spatial data for *D. adventitia* (sister to the clade comprised of picture wings plus *D. primaeva*).
+
+## Non-matching names
+
+Some names from the spatial data are not found in the tree, and conversely some names in the tree are not found in the spatial data.  Currently, there are `r sum(keepTrack$miss[, 1] != '')` species in the spatial data that do not have a match in the phylogeny.  These species account for `r round(100 * keepTrack$nlost, 2)`% of the spatial records. Can we further match any of these taxa (e.g. by synnonomy)?
+
+Below is a table (in alphabetical order) of names from one source that don't match in the other.
+
+```{r}
+kable(keepTrack$miss)
+```
