@@ -1,0 +1,18 @@
+Package: hiDrosophoBioGeo
+Type: Package
+Title: Ecological and evolutionary biogeography of Hawaiian picture wing Drosophila
+Version: 0.1.0
+Author: Andy Rominger
+Maintainer: <andrew.rominger@maine.edu>
+Description: Provide reproducible code and analytical workflow for paper
+License: GPL-3.0 License
+Encoding: UTF-8
+LazyLoad: yes
+LazyData: true
+Depends:
+    R (>= 4.0)
+Imports:
+    ape
+Suggests:
+    testthat
+RoxygenNote: 7.1.1
