@@ -12,7 +12,9 @@ LazyData: true
 Depends:
     R (>= 4.0)
 Imports:
-    ape
+    ape, 
+    knitr, 
+    rmarkdown
 Suggests:
     testthat
 RoxygenNote: 7.1.1
