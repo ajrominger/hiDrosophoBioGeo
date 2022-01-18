@@ -81,4 +81,25 @@ download.file(paste0(precipBase, precip),
               destfile = file.path(d, precip))
 unzip(file.path(d, precip), exdir = file.path(d, 'precip'))
 
+# path to annual precip data
+p <- list.files(file.path(d, 'precip'), pattern = 'ann.txt', full.names = TRUE)
+hiPrecip <- raster(p)
+
+# add to other climate data
+oldnames <- names(hiClim)
+hiClim <- addLayer(hiClim, hiPrecip)
+names(hiClim) <- c(oldnames, 'precip_mm')
+
+
+# write out data
+# ----
+
+# write raw raster
+writeRaster(hiClim, filename = 'inst/hiClim.tiff', driver = 'GeoTiff')
+
+# read back in data as brick
+hiClimBrick <- brick('inst/hiClim.tiff')
+
+# save brick object to data
+save(hiClimBrick, file = 'data/hiClimBrick.rda')
 
