@@ -14,7 +14,10 @@ Depends:
 Imports:
     ape, 
     knitr, 
-    rmarkdown
+    rmarkdown, 
+    sp, 
+    rgdal,
+    raster
 Suggests:
     testthat
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
