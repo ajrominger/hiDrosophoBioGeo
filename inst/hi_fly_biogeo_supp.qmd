@@ -1,0 +1,130 @@
+---
+title: "hi_fly_biogeo_supp"
+format: pdf
+---
+
+```{r}
+#| label: setup
+
+library(ape)
+library(dplyr)
+library(tidyr)
+library(taxize)
+
+```
+
+
+```{r}
+#| label: data-prep
+
+# tip name matching map
+tip_map <- read.csv("tip_mapping.csv")
+
+# drosoph phylo from Magnacca
+tre <- read.nexus("Dros_nuc_trim_f3noextramono.tree.nex") |> 
+    drop.tip(tip_map$raw_name[tip_map$matched_species == ""])
+
+# make tip names full species names
+tre$tip.label <- gsub(
+    "\\. | ", "_",
+    tip_map$matched_species[match(tre$tip.label, tip_map$raw_name)]
+)
+
+
+# read raw spatial fly occurrence data
+fly_dat <- read.csv("raw_data_2021-07-12.csv") |> 
+    mutate(SPECIES = trimws(SPECIES) |> 
+               gsub(" |\\. ", "_", x = _) |> 
+               (\(x) paste0("D_", x))())
+
+# make typo fix
+fly_dat$SPECIES[fly_dat$SPECIES == "D_silvestrs"] <- "D_silvestris"
+fly_dat$SPECIES[fly_dat$SPECIES == "D_cilaticrus"] <- "D_ciliaticrus"
+
+
+# match names with tree
+spp_frm_spat <- unique(fly_dat$SPECIES)
+
+fly_name_match <- lapply(spp_frm_spat, function(y) {
+    m <- grep(y, x = tre$tip.label, 
+               value = TRUE)
+    if(length(m) == 0) {
+        m <- NA
+    } else if(length(m) > 1) {
+        m <- m[1]
+    }
+    
+    c(spat_name = y, tre_name = m)
+}) |> 
+    do.call(rbind, args = _) |> 
+    as.data.frame()
+
+filter(fly_name_match, is.na(tre_name)) |> 
+    pull(spat_name) |> cat(sep = "\n")
+
+```
+
+
+```{r}
+phylo_name_check <- gsub("D_", "Drosophila ", tre$tip.label) |> 
+    gsub("nr_", "nr ", x = _) |> 
+    gsub("_.*", "", x = _) |> 
+    unique() 
+
+pnc <- list(
+    gna_verifier(phylo_name_check[1:50], fuzzy_uninomial = TRUE), 
+    gna_verifier(phylo_name_check[51:100], fuzzy_uninomial = TRUE), 
+    gna_verifier(phylo_name_check[101:116], fuzzy_uninomial = TRUE)
+) |> 
+    do.call(rbind, args = _)
+
+filter(pnc, matchType == "Fuzzy") |> 
+    select(c(submittedName, matchedCanonicalSimple))
+
+
+
+
+name_check <- filter(fly_name_match, is.na(tre_name)) |> 
+    pull(spat_name) |> 
+    gsub("D_", "Drosophila ", x = _) |> 
+    gna_verifier(fuzzy_uninomial = TRUE)
+
+```
+
+
+```{r}
+pdf("~/Desktop/boo.pdf", width = 20, height = 30)
+par(mar = rep(0.1, 4))
+plot(tre, y.lim = c(120, 0), edge.width = 4)
+dev.off()
+
+x <- tip_map$raw_name |> 
+    gsub(".*_Dro", "", x = _)
+
+y <- tip_map$matched_species |> 
+    gsub("D\\. ", "", x = _) |> 
+    substr(1, 4)
+
+tip_map[x != y, ]
+tip_map[40:42, ]
+
+
+plot(tre, show.tip.label = FALSE)
+axis(1)
+
+pdf("~/Desktop/foo.pdf", width = 20, height = 30)
+par(mar = rep(0.1, 4), bg = "white")
+plot(tre, y.lim = c(200, -8), edge.width = 4)
+dev.off()
+
+x <- read.tree("magnacca_price_2015_tree.new")
+
+plot(x, show.tip.label = FALSE)
+
+
+
+
+```
+
+
+
